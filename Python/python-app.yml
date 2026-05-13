@@ -1,0 +1,47 @@
+name: Python — Data Quality Check
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pandas numpy
+
+      - name: Lint with flake8 (critical errors only — build blocking)
+        run: |
+          flake8 Python/ --count --select=E9,F63,F7,F82 \
+            --show-source --statistics
+
+      - name: Lint with flake8 (style warnings — non-blocking)
+        run: |
+          flake8 Python/ --count --exit-zero \
+            --max-line-length=130 --statistics
+
+      - name: Validate dataset generation
+        run: |
+          python Python/generate_dataset.py
+          python - <<'EOF'
+          import pandas as pd
+          df = pd.read_csv("data/televisa_ratings_mock.csv")
+          assert len(df) == 520, f"Expected 520 rows, got {len(df)}"
+          assert len(df.columns) == 18, f"Expected 18 cols, got {len(df.columns)}"
+          assert df["rating"].between(0, 15).all(), "Rating out of range"
+          assert df["share_pct"].between(0, 100).all(), "Share out of range"
+          print("Dataset OK —", len(df), "filas,", len(df.columns), "columnas")
+          EOF
