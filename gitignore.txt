@@ -1,0 +1,20 @@
+# Power BI temp files
+*.pbix.tmp
+*.pbix.lock
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Credentials
+*.env
+config.ini
+secrets.json
